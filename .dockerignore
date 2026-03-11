@@ -1,0 +1,13 @@
+venv/
+.venv/
+__pycache__/
+.pytest_cache/
+tests/
+.git/
+.github/
+
+# Data folder
+data/
+
+# EDA
+eda.ipynb

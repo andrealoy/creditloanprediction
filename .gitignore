@@ -1,0 +1,8 @@
+# Data folder
+data/
+
+# tests folder
+tests/
+
+# EDA
+eda.ipynb

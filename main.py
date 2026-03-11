@@ -3,9 +3,11 @@ from pydantic import BaseModel
 import joblib
 import pandas as pd
 import numpy as np
+import os
 
-# 1. Load the model
-model = joblib.load('models/credit_risk_model_rf.pkl')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(BASE_DIR, 'models', 'credit_risk_model_rf.pkl')
+model = joblib.load(model_path)
 
 app = FastAPI(title="Credit Score API", description="Predicts the risk of default for a client")
 
