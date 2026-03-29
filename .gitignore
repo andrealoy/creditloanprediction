@@ -12,6 +12,10 @@ eda.ipynb
 venv/
 env/
 
+#MLflows
+mlflow.db
+mlruns/
+
 # Python cache
 __pycache__/
 *.pyc
