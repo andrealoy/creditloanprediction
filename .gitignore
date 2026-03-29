@@ -4,9 +4,6 @@ data/
 # tests folder
 tests/
 
-# EDA
-eda.ipynb
-
 # Virtual environment
 .venv/
 venv/
