@@ -64,3 +64,10 @@ jobs:
         # Envoi des deux tags vers AWS
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Deploy to Amazon ECS
+      run: |
+        aws ecs update-service --cluster credit-scoring-cluster \
+                               --service credit-scoring-service \
+                               --force-new-deployment \
+                               --region ${{ secrets.AWS_REGION }}
