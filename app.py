@@ -2,6 +2,7 @@ import streamlit as st
 import mlflow.sklearn
 import pandas as pd
 import numpy as np
+#TODO: Implement app for AWS deployment
 
 model = mlflow.sklearn.load_model("models:/best_credit_loan_model/1")
 
