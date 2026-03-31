@@ -1,39 +1,7 @@
-name: Credit Scoring Pipeline
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  # ÉTAPE 1 : On vérifie que le code est propre et fonctionnel
-  test-and-lint:
+build-and-push:
+    needs: test-and-lint
     runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest
-
-    - name: Run Tests
-      run: python -m pytest
-
-  # ÉTAPE 2 : On build le Docker et on l'envoie sur ECR
-  build-and-push:
-    needs: test-and-lint # CRUCIAL : attend que les tests passent
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' # Uniquement sur le push main
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
     - name: Checkout code
@@ -56,16 +24,12 @@ jobs:
         ECR_REPOSITORY: credit-scoring-app
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # Build de l'image avec le hash du commit pour la traçabilité
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        # On tag aussi en 'latest' pour le déploiement automatique
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        
-        # Envoi des deux tags vers AWS
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Deploy to Amazon ECS
+    - name: Deploy to Amazon ECS
       run: |
         aws ecs update-service --cluster credit-scoring-cluster \
                                --service credit-scoring-service \
