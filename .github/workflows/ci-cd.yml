@@ -63,6 +63,6 @@ jobs:
       - name: Deploy to Amazon ECS
         run: |
           aws ecs update-service --cluster credit-scoring-cluster \
-                                 --service credit-scoring-service \
+                                 --service credit-scoring-task-service-4zcsf95g \
                                  --force-new-deployment \
                                  --region ${{ secrets.AWS_REGION }}
