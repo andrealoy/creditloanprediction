@@ -1,9 +1,3 @@
-# Data folder
-data/
-
-# tests folder
-tests/
-
 # Virtual environment
 .venv/
 venv/
@@ -20,11 +14,6 @@ __pycache__/
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
-
-# ML model files
-*.pkl
-*.joblib
-*.h5
 
 # IDE
 .vscode/
