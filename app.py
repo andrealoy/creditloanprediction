@@ -1,10 +1,13 @@
 import streamlit as st
-import mlflow.sklearn
 import pandas as pd
 import numpy as np
-#TODO: Implement app for AWS deployment
+import requests
+import os
 
-model = mlflow.sklearn.load_model("models:/best_credit_loan_model/1")
+API_URL = os.getenv("API_URL", "http://localhost:8000/predict")
+
+
+
 
 st.title("Credit Loan Default Prediction")
 st.write("Remplis les informations du client pour prédire le risque de défaut.")
@@ -17,15 +20,27 @@ years_employed = st.number_input("Années d'emploi", min_value=0.0)
 fico_score = st.number_input("Score FICO", min_value=300, max_value=850)
 
 if st.button("Prédire"):
-    input_data = pd.DataFrame([[credit_lines, loan_amt, total_debt, income, years_employed, fico_score]],
-                               columns=["credit_lines_outstanding", "loan_amt_outstanding", 
-                                        "total_debt_outstanding", "income", 
-                                        "years_employed", "fico_score"])
-    
-    prediction = model.predict(input_data)
-    proba = model.predict_proba(input_data)[0][1]
+    payload = {
+        "credit_lines_outstanding": credit_lines,
+        "loan_amt_outstanding": loan_amt,
+        "total_debt_outstanding": total_debt,
+        "income": income,
+        "years_employed": years_employed,
+        "fico_score": fico_score
+    }
 
-    if prediction[0] == 1:
-        st.error(f"Risque de défaut détecté - probabilité : {proba:.1%})")
-    else:
-        st.success(f"Pas de risque de défaut - probabilité : {proba:.1%})")
+    try:
+        response = requests.post(API_URL, json=payload)
+        response.raise_for_status()
+        result = response.json()
+
+        prediction = result.get("prediction")
+        proba = result.get("default_probability")
+
+        if prediction == "Default":
+            st.error(f"Risque de défaut détecté - probabilité : {proba:.1%}")
+        else:
+            st.success(f"Pas de risque de défaut - probabilité : {proba:.1%}")
+
+    except Exception as e:
+        st.error(f"Erreur API : {e}")
