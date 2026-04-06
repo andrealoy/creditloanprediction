@@ -1,15 +1,14 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import joblib
 import pandas as pd
 import numpy as np
-import os
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(BASE_DIR, 'models', 'credit_risk_model_rf.pkl')
-model = joblib.load(model_path)
+import mlflow
 
 app = FastAPI(title="Credit Score API", description="Predicts the risk of default for a client")
+
+# 1. Loading model from mlflow
+model = mlflow.sklearn.load_model("models:/best_credit_loan_model/Production")
+preprocessor = mlflow.sklearn.load_model("models:/credit_loan_preprocessor/1")
 
 # 2. Define the input data model
 class ClientData(BaseModel):
@@ -29,13 +28,12 @@ def predict(client: ClientData):
     # a. Convert the received JSON into a DataFrame
     input_df = pd.DataFrame([client.model_dump()])
     
-    # b. Apply log1p transformation (crucial for the model to recognize the data)
-    input_df['loan_amt_outstanding'] = np.log1p(input_df['loan_amt_outstanding'])
-    input_df['total_debt_outstanding'] = np.log1p(input_df['total_debt_outstanding'])
-    
+    # b. Apply the preprocessor
+    X_processed = preprocessor.transform(input_df)
+
     # c. Prediction
-    probability = model.predict_proba(input_df)[0][1]
-    prediction = int(model.predict(input_df)[0])
+    probability = model.predict_proba(X_processed)[0][1]
+    prediction = int(model.predict(X_processed)[0])
     
     # d. Return the result
     return {
