@@ -31,7 +31,7 @@ if st.button("Prédire"):
     }
 
     try:
-        response = requests.post(API_URL, json=payload)
+        response = requests.post(API_URL, json=payload, timeout=5)
         response.raise_for_status()
         result = response.json()
 
