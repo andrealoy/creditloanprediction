@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import mlflow
 
+
 app = FastAPI(title="Credit Score API", description="Predicts the risk of default for a client")
 
 # 1. Loading model from mlflow
@@ -34,7 +35,7 @@ def predict(client: ClientData):
     # c. Prediction
     probability = model.predict_proba(X_processed)[0][1]
     prediction = int(model.predict(X_processed)[0])
-    
+
     # d. Return the result
     return {
         "status": "success",
