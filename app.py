@@ -33,6 +33,7 @@ if st.button("Prédire"):
     try:
         with st.spinner("Calcul en cours..."):
             response = requests.post(API_URL, json=payload, timeout=5)
+            st.write(f"Status API: {response.status_code}")
             response.raise_for_status()
             result = response.json()
             prediction = result.get("prediction")
