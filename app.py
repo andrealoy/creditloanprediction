@@ -37,11 +37,12 @@ if st.button("Prédire"):
 
         prediction = result.get("prediction")
         proba = result.get("default_probability")
+        risk_level = result.get("risk_level")
 
         if prediction == "Default":
-            st.error(f"Risque de défaut détecté - probabilité : {proba:.1%}")
+            st.error(f"Risque de défaut ({risk_level}) - probabilité : {proba:.1%}")
         else:
-            st.success(f"Pas de risque de défaut - probabilité : {proba:.1%}")
+            st.success(f"Pas de risque ({risk_level}) - probabilité : {proba:.1%}")
 
     except Exception as e:
         st.error(f"Erreur API : {e}")
