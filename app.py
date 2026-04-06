@@ -4,6 +4,7 @@ import numpy as np
 import requests
 import os
 
+# Configurable API endpoint (supports local and AWS deployment)
 API_URL = os.getenv("API_URL", "http://localhost:8000/predict")
 
 
@@ -30,17 +31,19 @@ if st.button("Prédire"):
     }
 
     try:
-        response = requests.post(API_URL, json=payload)
-        response.raise_for_status()
-        result = response.json()
-
-        prediction = result.get("prediction")
-        proba = result.get("default_probability")
+        with st.spinner("Calcul en cours..."):
+            response = requests.post(API_URL, json=payload, timeout=5)
+            st.write(f"Status API: {response.status_code}")
+            response.raise_for_status()
+            result = response.json()
+            prediction = result.get("prediction")
+            proba = result.get("default_probability")
+            risk_level = result.get("risk_level")
 
         if prediction == "Default":
-            st.error(f"Risque de défaut détecté - probabilité : {proba:.1%}")
+            st.error(f"Risque de défaut ({risk_level}) - probabilité : {proba:.1%}")
         else:
-            st.success(f"Pas de risque de défaut - probabilité : {proba:.1%}")
+            st.success(f"Pas de risque ({risk_level}) - probabilité : {proba:.1%}")
 
     except Exception as e:
         st.error(f"Erreur API : {e}")
