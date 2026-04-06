@@ -31,13 +31,13 @@ if st.button("Prédire"):
     }
 
     try:
-        response = requests.post(API_URL, json=payload, timeout=5)
-        response.raise_for_status()
-        result = response.json()
-
-        prediction = result.get("prediction")
-        proba = result.get("default_probability")
-        risk_level = result.get("risk_level")
+        with st.spinner("Calcul en cours..."):
+            response = requests.post(API_URL, json=payload, timeout=5)
+            response.raise_for_status()
+            result = response.json()
+            prediction = result.get("prediction")
+            proba = result.get("default_probability")
+            risk_level = result.get("risk_level")
 
         if prediction == "Default":
             st.error(f"Risque de défaut ({risk_level}) - probabilité : {proba:.1%}")
