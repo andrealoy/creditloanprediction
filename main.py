@@ -22,13 +22,13 @@ app = FastAPI(title="Credit Score API", description="Predicts the risk of defaul
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_MODEL_PATH = BASE_DIR / "models" / "credit_risk_model_rf.pkl"
-DEFAULT_PREPROCESSOR_PATH = BASE_DIR / "models" / "scaler_credit.pkl"
+DEFAULT_MODEL_PATH = BASE_DIR / "models" / "credit_risk_model_xgb.pkl"
 DEFAULT_TRACKING_URI = f"sqlite:///{(BASE_DIR / 'mlflow.db').as_posix()}"
 DEFAULT_REGISTRY_URI = DEFAULT_TRACKING_URI
 DEFAULT_MODEL_NAME = "best_credit_loan_model"
 DEFAULT_PREPROCESSOR_NAME = "credit_loan_preprocessor"
 DEFAULT_MODEL_STAGE = "Production"
+LOCAL_FALLBACK_CREDIT_LINES_OUTSTANDING = 0
 
 
 class ClientData(BaseModel):
@@ -55,31 +55,43 @@ class Predictor(Protocol):
 
 
 class LocalPredictor:
-    def __init__(self, model_path: Path, preprocessor_path: Path) -> None:
+    def __init__(self, model_path: Path) -> None:
         self.model = joblib.load(model_path)
-        self.preprocessor = joblib.load(preprocessor_path)
 
     @staticmethod
-    def _build_features(client: ClientData) -> tuple[pd.DataFrame, float, float]:
+    def _build_engineered_features(client: ClientData) -> tuple[pd.DataFrame, float]:
         input_df = pd.DataFrame([client.model_dump()])
         dti = np.log(input_df["total_debt_outstanding"]) / input_df["income"]
-        lti = np.log(input_df["loan_amt_outstanding"]) / input_df["income"]
         features = pd.DataFrame(
             {
                 "income": input_df["income"],
                 "years_employed": input_df["years_employed"],
                 "fico_score": input_df["fico_score"],
                 "dti": dti,
-                "lti": lti,
             }
         )
-        return features, float(dti.iloc[0]), float(lti.iloc[0])
+        return features, float(dti.iloc[0])
+
+    @staticmethod
+    def _build_local_xgb_input(client: ClientData) -> pd.DataFrame:
+        return pd.DataFrame(
+            [
+                {
+                    "credit_lines_outstanding": LOCAL_FALLBACK_CREDIT_LINES_OUTSTANDING,
+                    "loan_amt_outstanding": client.loan_amt_outstanding,
+                    "total_debt_outstanding": client.total_debt_outstanding,
+                    "income": client.income,
+                    "years_employed": client.years_employed,
+                    "fico_score": client.fico_score,
+                }
+            ]
+        )
 
     def predict(self, client: ClientData) -> dict:
-        features, dti, lti = self._build_features(client)
-        transformed = self.preprocessor.transform(features)
-        probability = self.model.predict_proba(transformed)[0][1]
-        prediction = int(self.model.predict(transformed)[0])
+        _, dti = self._build_engineered_features(client)
+        model_input = self._build_local_xgb_input(client)
+        probability = self.model.predict_proba(model_input)[0][1]
+        prediction = int(self.model.predict(model_input)[0])
 
         return {
             "status": "success",
@@ -87,7 +99,6 @@ class LocalPredictor:
             "prediction": "Default" if prediction == 1 else "Healthy",
             "risk_level": "High" if probability > 0.5 else "Low",
             "dti": round(dti, 6),
-            "lti": round(lti, 6),
         }
 
 
@@ -99,7 +110,7 @@ class MlflowPredictor:
         self.preprocessor = mlflow.sklearn.load_model(preprocessor_uri) if preprocessor_uri else None
 
     def predict(self, client: ClientData) -> dict:
-        features, dti, lti = LocalPredictor._build_features(client)
+        features, dti = LocalPredictor._build_engineered_features(client)
         expected_features = list(getattr(self.model, "feature_names_in_", features.columns.tolist()))
         model_input = features[expected_features]
 
@@ -116,7 +127,6 @@ class MlflowPredictor:
             "prediction": "Default" if prediction == 1 else "Healthy",
             "risk_level": "High" if probability > 0.5 else "Low",
             "dti": round(dti, 6),
-            "lti": round(lti, 6),
         }
 
 
@@ -186,8 +196,7 @@ def get_predictor() -> Predictor:
             logger.warning("MLflow registry unavailable, falling back to local model artifacts.", exc_info=True)
 
     model_path = Path(os.getenv("MODEL_PATH", str(DEFAULT_MODEL_PATH)))
-    preprocessor_path = Path(os.getenv("PREPROCESSOR_PATH", str(DEFAULT_PREPROCESSOR_PATH)))
-    return LocalPredictor(model_path=model_path, preprocessor_path=preprocessor_path)
+    return LocalPredictor(model_path=model_path)
 
 
 @app.get("/")

@@ -12,7 +12,6 @@ class DummyPredictor:
             "prediction": "Default",
             "risk_level": "High",
             "dti": 0.230259,
-            "lti": 0.213146,
         }
 
 
@@ -39,7 +38,6 @@ def test_predict_returns_expected_payload(monkeypatch):
         "prediction": "Default",
         "risk_level": "High",
         "dti": 0.230259,
-        "lti": 0.213146,
     }
 
 

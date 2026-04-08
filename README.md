@@ -47,6 +47,7 @@ Par défaut, l'API charge le modèle depuis la registry MLflow locale du projet 
 L'inférence utilise directement les features attendues par le meilleur modèle enregistré (`best_credit_loan_model`), ce qui évite les problèmes de portabilité du préprocesseur sérialisé dans le notebook.
 
 Dans l'image Docker, le mode par défaut est `auto` : l'API utilise MLflow si une registry est disponible, sinon elle retombe sur les artefacts locaux du dossier `models/`. Cela évite de rendre le build dépendant de fichiers `mlruns/` non versionnés.
+Le fallback local utilise maintenant l'artefact XGBoost embarqué dans `models/`.
 
 Pour forcer un fallback sur les artefacts locaux `models/`, définir :
 
