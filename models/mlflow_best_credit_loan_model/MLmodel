@@ -1,0 +1,23 @@
+artifact_path: file:///c:/Users/alize/Documents/SDA_2025_2026/projet_mlops/creditloanprediction/mlruns/1/models/m-61b9814452384517a217559a504a6193/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.0
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+mlflow_version: 3.10.1
+model_id: m-61b9814452384517a217559a504a6193
+model_size_bytes: 286376
+model_uuid: m-61b9814452384517a217559a504a6193
+prompts: null
+run_id: b3dd0f439c7040b48f902878e0077a77
+utc_time_created: '2026-04-06 17:25:38.669583'
