@@ -6,7 +6,7 @@ from typing import Protocol
 import joblib
 import numpy as np
 import pandas as pd
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
 try:
@@ -194,5 +194,6 @@ def health() -> dict:
 
 
 @app.post("/predict")
-def predict(client: ClientData, predictor: Predictor = Depends(get_predictor)) -> dict:
+def predict(client: ClientData) -> dict:
+    predictor = get_predictor()
     return predictor.predict(client)

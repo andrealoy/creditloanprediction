@@ -1,9 +1,15 @@
 from types import SimpleNamespace
+from pathlib import Path
 
 from main import MlflowPredictor, get_predictor, resolve_local_model_path, resolve_registered_model_uri
 
 
-def test_resolve_local_model_path_uses_embedded_mlruns_artifacts():
+def test_resolve_local_model_path_uses_embedded_mlruns_artifacts(monkeypatch):
+    fake_base_dir = SimpleNamespace(
+        glob=lambda pattern: [Path("/tmp/project/mlruns/1/models/m-61b9814452384517a217559a504a6193/artifacts")]
+    )
+    monkeypatch.setattr("main.BASE_DIR", fake_base_dir)
+
     resolved = resolve_local_model_path("models:/m-61b9814452384517a217559a504a6193")
 
     assert resolved.endswith("mlruns/1/models/m-61b9814452384517a217559a504a6193/artifacts")
@@ -20,6 +26,10 @@ def test_resolve_registered_model_uri_prefers_latest_stage_version(monkeypatch):
             ]
 
     monkeypatch.setattr("main.MlflowClient", lambda: FakeClient())
+    fake_base_dir = SimpleNamespace(
+        glob=lambda pattern: [Path("/tmp/project/mlruns/1/models/m-61b9814452384517a217559a504a6193/artifacts")]
+    )
+    monkeypatch.setattr("main.BASE_DIR", fake_base_dir)
 
     resolved = resolve_registered_model_uri("best_credit_loan_model", stage="Production")
 

@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 import pytest
 
-from main import app, get_predictor
+from main import app
 
 
 class DummyPredictor:
@@ -19,8 +19,8 @@ class DummyPredictor:
 client = TestClient(app)
 
 
-def test_predict_returns_expected_payload():
-    app.dependency_overrides[get_predictor] = lambda: DummyPredictor()
+def test_predict_returns_expected_payload(monkeypatch):
+    monkeypatch.setattr("main.get_predictor", lambda: DummyPredictor())
 
     payload = {
         "loan_amt_outstanding": 5000,
