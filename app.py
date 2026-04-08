@@ -1,13 +1,10 @@
 import streamlit as st
-import mlflow.sklearn
-import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 import os
 import requests
 
 # --- Configurable API endpoint (supports local and AWS deployment)
-API_URL = os.getenv("API_URL", "http://localhost:8000/predict")
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/predict")
 
 # --- Style
 st.set_page_config(
@@ -26,9 +23,9 @@ with col_form:
     st.subheader("Informations client")
 
     #credit_lines   = st.number_input("Nombre de lignes de crédit", min_value=0, value=3)
-    loan_amt       = st.number_input("Montant du prêt restant (€)", min_value=0.0, value=20000.0, step=500.0)
-    total_debt     = st.number_input("Dette totale restante (€)", min_value=0.0, value=8000.0, step=500.0)
-    income         = st.number_input("Revenu annuel (€)", min_value=0.0, value=45000.0, step=1000.0)
+    loan_amt       = st.number_input("Montant du prêt restant (€)", min_value=1.0, value=20000.0, step=500.0)
+    total_debt     = st.number_input("Dette totale restante (€)", min_value=1.0, value=8000.0, step=500.0)
+    income         = st.number_input("Revenu annuel (€)", min_value=1.0, value=45000.0, step=1000.0)
     years_employed = st.number_input("Années d'emploi", min_value=0.0, value=5.0, step=0.5)
     fico_score     = st.slider("Score FICO", min_value=300, max_value=850, value=680)
 

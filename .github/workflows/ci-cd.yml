@@ -24,10 +24,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest
 
       - name: Run Tests
-        run: python -m pytest
+        run: python -m pytest -q
+
+      - name: Smoke build Docker image
+        run: docker build -t creditloanprediction:ci .
+
+      - name: Smoke test Docker container
+        run: |
+          docker run -d --rm --name creditloanprediction-ci -p 18000:8000 -p 18501:8501 creditloanprediction:ci
+          trap 'docker stop creditloanprediction-ci' EXIT
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:18000/health; then
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS -X POST http://127.0.0.1:18000/predict \
+            -H 'content-type: application/json' \
+            -d '{"loan_amt_outstanding":5000,"total_debt_outstanding":10000,"income":40000,"years_employed":5,"fico_score":650}'
 
   # ÉTAPE 2 : Build Docker et Push vers ECR + Deploy vers ECS
   build-and-push:

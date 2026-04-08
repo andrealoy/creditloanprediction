@@ -24,11 +24,35 @@ uvicorn main:app --reload
 ### Frontend
 streamlit run app.py
 
+## Lancement avec Docker
+
+### Build
+docker build -t creditloanprediction:latest .
+
+### Run
+docker run --rm -p 8000:8000 -p 8501:8501 creditloanprediction:latest
+
+Le backend FastAPI est alors disponible sur `http://localhost:8000` et le frontend Streamlit sur `http://localhost:8501`.
+
 ## Points MLOps
 - Séparation frontend / backend / modèle
 - Communication via endpoint `/predict`
 - URL d’API configurable pour le déploiement
 - Gestion robuste des requêtes (timeout)
+- Chargement par défaut du meilleur modèle enregistré dans MLflow (`best_credit_loan_model`, stage `Production`)
+
+## Source du modèle
+
+Par défaut, l'API charge le modèle depuis la registry MLflow locale du projet (`mlflow.db` + `mlruns/`).
+L'inférence utilise directement les features attendues par le meilleur modèle enregistré (`best_credit_loan_model`), ce qui évite les problèmes de portabilité du préprocesseur sérialisé dans le notebook.
+
+Pour forcer un fallback sur les artefacts locaux `models/`, définir :
+
+`MODEL_SOURCE=local`
+
+Pour réactiver explicitement le préprocesseur enregistré dans MLflow, définir :
+
+`MLFLOW_USE_PREPROCESSOR=true`
 
 ## Contributions (équipe)
 - Entraînement du modèle et suivi MLflow
