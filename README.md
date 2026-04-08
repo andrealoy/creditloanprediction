@@ -46,9 +46,15 @@ Le backend FastAPI est alors disponible sur `http://localhost:8000` et le fronte
 Par défaut, l'API charge le modèle depuis la registry MLflow locale du projet (`mlflow.db` + `mlruns/`).
 L'inférence utilise directement les features attendues par le meilleur modèle enregistré (`best_credit_loan_model`), ce qui évite les problèmes de portabilité du préprocesseur sérialisé dans le notebook.
 
+Dans l'image Docker, le mode par défaut est `auto` : l'API utilise MLflow si une registry est disponible, sinon elle retombe sur les artefacts locaux du dossier `models/`. Cela évite de rendre le build dépendant de fichiers `mlruns/` non versionnés.
+
 Pour forcer un fallback sur les artefacts locaux `models/`, définir :
 
 `MODEL_SOURCE=local`
+
+Pour forcer strictement l'usage de MLflow, définir :
+
+`MODEL_SOURCE=mlflow`
 
 Pour réactiver explicitement le préprocesseur enregistré dans MLflow, définir :
 

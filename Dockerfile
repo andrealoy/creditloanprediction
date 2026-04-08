@@ -7,7 +7,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV API_URL=http://127.0.0.1:8000/predict
-ENV MODEL_SOURCE=mlflow
+ENV MODEL_SOURCE=auto
 ENV MLFLOW_TRACKING_URI=sqlite:////app/mlflow.db
 ENV MLFLOW_REGISTRY_URI=sqlite:////app/mlflow.db
 
@@ -21,8 +21,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 COPY entrypoint.sh .
 COPY main.py .
-COPY mlflow.db .
-COPY mlruns ./mlruns
 COPY models ./models
 
 RUN chmod +x /app/entrypoint.sh

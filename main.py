@@ -1,4 +1,5 @@
 import os
+import logging
 from functools import lru_cache
 from pathlib import Path
 from typing import Protocol
@@ -18,6 +19,7 @@ except ImportError:
 
 
 app = FastAPI(title="Credit Score API", description="Predicts the risk of default for a client")
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_MODEL_PATH = BASE_DIR / "models" / "credit_risk_model_rf.pkl"
@@ -162,21 +164,26 @@ def resolve_registered_model_uri(model_name: str, stage: str | None = None, vers
 
 @lru_cache(maxsize=1)
 def get_predictor() -> Predictor:
-    source = os.getenv("MODEL_SOURCE", "mlflow").lower()
-    if source == "mlflow":
-        configure_mlflow()
-        model_uri = os.getenv("MLFLOW_MODEL_URI") or resolve_registered_model_uri(
-            model_name=os.getenv("MLFLOW_MODEL_NAME", DEFAULT_MODEL_NAME),
-            stage=os.getenv("MLFLOW_MODEL_STAGE", DEFAULT_MODEL_STAGE),
-            version=os.getenv("MLFLOW_MODEL_VERSION"),
-        )
-        preprocessor_uri = None
-        if os.getenv("MLFLOW_USE_PREPROCESSOR", "false").lower() == "true":
-            preprocessor_uri = os.getenv("MLFLOW_PREPROCESSOR_URI") or resolve_registered_model_uri(
-                model_name=os.getenv("MLFLOW_PREPROCESSOR_NAME", DEFAULT_PREPROCESSOR_NAME),
-                version=os.getenv("MLFLOW_PREPROCESSOR_VERSION"),
+    source = os.getenv("MODEL_SOURCE", "auto").lower()
+    if source in {"mlflow", "auto"}:
+        try:
+            configure_mlflow()
+            model_uri = os.getenv("MLFLOW_MODEL_URI") or resolve_registered_model_uri(
+                model_name=os.getenv("MLFLOW_MODEL_NAME", DEFAULT_MODEL_NAME),
+                stage=os.getenv("MLFLOW_MODEL_STAGE", DEFAULT_MODEL_STAGE),
+                version=os.getenv("MLFLOW_MODEL_VERSION"),
             )
-        return MlflowPredictor(model_uri=model_uri, preprocessor_uri=preprocessor_uri)
+            preprocessor_uri = None
+            if os.getenv("MLFLOW_USE_PREPROCESSOR", "false").lower() == "true":
+                preprocessor_uri = os.getenv("MLFLOW_PREPROCESSOR_URI") or resolve_registered_model_uri(
+                    model_name=os.getenv("MLFLOW_PREPROCESSOR_NAME", DEFAULT_PREPROCESSOR_NAME),
+                    version=os.getenv("MLFLOW_PREPROCESSOR_VERSION"),
+                )
+            return MlflowPredictor(model_uri=model_uri, preprocessor_uri=preprocessor_uri)
+        except Exception:
+            if source == "mlflow":
+                raise
+            logger.warning("MLflow registry unavailable, falling back to local model artifacts.", exc_info=True)
 
     model_path = Path(os.getenv("MODEL_PATH", str(DEFAULT_MODEL_PATH)))
     preprocessor_path = Path(os.getenv("PREPROCESSOR_PATH", str(DEFAULT_PREPROCESSOR_PATH)))
